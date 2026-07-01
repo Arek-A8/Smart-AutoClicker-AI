@@ -27,9 +27,10 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install NDK and CMake (for native NCNN detector)
+      - name: Install CMake and accept licenses (NDK auto-fetched by AGP)
         run: |
-          sdkmanager "ndk;27.0.12077973" "cmake;3.22.1"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "cmake;3.22.1"
 
       - name: Cache Gradle
         uses: actions/cache@v4
