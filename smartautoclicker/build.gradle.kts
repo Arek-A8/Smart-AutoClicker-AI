@@ -65,8 +65,8 @@ android {
         buildTypes {
             debug {
                 // Co-install alongside the original Klick'r for side-by-side comparison of the AI build.
+                // Distinct applicationId (com.buzbuz.smartautoclicker.ai) so both APKs install together.
                 applicationIdSuffix = ".ai"
-                resValue("string", "app_name", "Klickr AI")
             }
         }
     }
