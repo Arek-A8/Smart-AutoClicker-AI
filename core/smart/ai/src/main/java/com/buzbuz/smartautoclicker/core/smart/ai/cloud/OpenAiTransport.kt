@@ -16,6 +16,8 @@
  */
 package com.buzbuz.smartautoclicker.core.smart.ai.cloud
 
+import android.util.Log
+
 import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
 import kotlinx.serialization.encodeToString
 
@@ -23,14 +25,16 @@ import kotlinx.serialization.encodeToString
  * Talks to an OpenAI-compatible chat completions API:
  * POST {baseUrl}/chat/completions  with  Authorization: Bearer {apiKey}
  *
- * The image is sent as a data-URL image_url content part.
+ * The image is sent as a data-URL image_url content part. Also used for the local llama.cpp server, whose endpoint is
+ * OpenAI-compatible and ignores the requested model name (uses whatever model is loaded).
  */
 internal class OpenAiTransport(private val config: AiConfig) : CloudTransport {
 
     override fun request(systemText: String, userText: String, imageBase64Jpeg: String): String {
         val dataUrl = "data:image/jpeg;base64,$imageBase64Jpeg"
         val body = ChatRequest(
-            model = config.model,
+            // Local llama-server ignores this; some servers reject an empty string, so default it.
+            model = config.model.ifBlank { "local-model" },
             messages = listOf(
                 ChatMessage(role = "system", content = listOf(ContentPart.text(systemText))),
                 ChatMessage(
@@ -38,21 +42,38 @@ internal class OpenAiTransport(private val config: AiConfig) : CloudTransport {
                     content = listOf(ContentPart.text(userText), ContentPart.image(dataUrl)),
                 ),
             ),
-            responseFormat = ResponseFormat(type = "json_object"),
+            // Thinking models (Gemma 4) spend tokens reasoning before the JSON; give generous headroom.
+            maxTokens = 1024,
+            // json_object mode is not universally supported (and can conflict with thinking); omit it.
+            responseFormat = null,
         )
 
         val base = config.baseUrl.trimEnd('/')
+        val url = "$base/chat/completions"
+        Log.i(TAG, "POST $url (model=${body.model}, imageBytes~${imageBase64Jpeg.length})")
+
         val result = httpPostJson(
-            url = "$base/chat/completions",
+            url = url,
             jsonBody = cloudJson.encodeToString(body),
             headers = mapOf("Authorization" to "Bearer ${config.apiKey}"),
             timeoutMs = config.requestTimeoutMs,
         )
         if (!result.isSuccess) {
-            throw CloudRequestException("OpenAI-compatible request failed with HTTP ${result.code}")
+            Log.e(TAG, "HTTP ${result.code}: ${result.body.take(300)}")
+            throw CloudRequestException("Request failed: HTTP ${result.code} ${result.body.take(200)}")
         }
+
         val parsed = cloudJson.decodeFromString<ChatResponse>(result.body)
-        return parsed.choices.firstOrNull()?.message?.content
-            ?: throw CloudRequestException("OpenAI-compatible response contained no content")
+        val text = parsed.choices.firstOrNull()?.message?.effectiveText()
+        if (text.isNullOrBlank()) {
+            Log.e(TAG, "Empty response content. Raw: ${result.body.take(300)}")
+            throw CloudRequestException("Response contained no usable text")
+        }
+        Log.i(TAG, "Response text (${text.length} chars): ${text.take(200)}")
+        return text
+    }
+
+    private companion object {
+        const val TAG = "AiOpenAiTransport"
     }
 }

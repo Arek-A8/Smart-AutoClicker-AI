@@ -74,7 +74,12 @@ internal data class ChatChoice(
 @Serializable
 internal data class ChatResponseMessage(
     val content: String? = null,
-)
+    // Thinking models (e.g. Gemma 4 via llama.cpp) place their output here and leave content empty/null.
+    @SerialName("reasoning_content") val reasoningContent: String? = null,
+) {
+    /** Content if present and non-blank, otherwise the reasoning text (thinking models). */
+    fun effectiveText(): String? = content?.takeIf { it.isNotBlank() } ?: reasoningContent
+}
 
 /**
  * Structured payload we instruct the model to return for a [VisionModel.detect] call.

@@ -143,6 +143,8 @@
     <string name="field_ai_config_api_key">API key (cloud only)</string>
     <string name="field_ai_config_model">Model (cloud only)</string>
     <string name="field_ai_config_local_hint">Local mode sends frames to a llama.cpp server on http://127.0.0.1:8080 and uses whatever model is currently loaded. Cloud fields are ignored when local is on.</string>
+    <string name="field_ai_config_test">Test connection</string>
+    <string name="field_ai_config_testing">Sending a test image to the model… this can take a while on a local CPU model.</string>
 
 
     <!-- Legacy condition migration dialog  ======================================================================== -->

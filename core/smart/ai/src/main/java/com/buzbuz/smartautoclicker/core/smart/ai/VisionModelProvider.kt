@@ -26,4 +26,10 @@ package com.buzbuz.smartautoclicker.core.smart.ai
 interface VisionModelProvider {
     /** @return the configured [VisionModel], or null if AI is not configured/available. */
     fun getVisionModel(): VisionModel?
+
+    /**
+     * Probe the given [config] end-to-end (sends a tiny image) and return a human-readable pass/fail message.
+     * Never throws. Used by the AI settings "test connection" action.
+     */
+    suspend fun testConnection(config: AiConfig): String
 }

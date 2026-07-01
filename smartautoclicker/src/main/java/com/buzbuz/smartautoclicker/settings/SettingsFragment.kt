@@ -174,21 +174,46 @@ class SettingsFragment : Fragment() {
             setPadding(0, dp(8), 0, 0)
         })
 
+        fun currentConfig(): AiConfig = config.copy(
+            backend = if (useLocalSwitch.isChecked) VisionBackend.LOCAL else VisionBackend.CLOUD,
+            baseUrl = baseUrlField.text.toString().trim(),
+            apiKey = apiKeyField.text.toString().trim(),
+            model = modelField.text.toString().trim(),
+        )
+
         MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.field_ai_config_title)
             .setView(container)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                viewModel.setAiConfig(
-                    config.copy(
-                        backend = if (useLocalSwitch.isChecked) VisionBackend.LOCAL else VisionBackend.CLOUD,
-                        baseUrl = baseUrlField.text.toString().trim(),
-                        apiKey = apiKeyField.text.toString().trim(),
-                        model = modelField.text.toString().trim(),
-                    )
-                )
+                viewModel.setAiConfig(currentConfig())
+            }
+            .setNeutralButton(R.string.field_ai_config_test) { _, _ ->
+                // Persist first so the test uses exactly what the user entered, then probe the endpoint.
+                val cfg = currentConfig()
+                viewModel.setAiConfig(cfg)
+                runAiConnectionTest(cfg)
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    private fun runAiConnectionTest(config: AiConfig) {
+        val ctx = requireContext()
+        val progress = MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.field_ai_config_test)
+            .setMessage(getString(R.string.field_ai_config_testing))
+            .setCancelable(false)
+            .show()
+
+        lifecycleScope.launch {
+            val result = viewModel.testAiConnection(config)
+            progress.dismiss()
+            MaterialAlertDialogBuilder(ctx)
+                .setTitle(R.string.field_ai_config_test)
+                .setMessage(result)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+        }
     }
 
     private fun updateForceEntireScreenVisibility(shouldBeVisible: Boolean) {

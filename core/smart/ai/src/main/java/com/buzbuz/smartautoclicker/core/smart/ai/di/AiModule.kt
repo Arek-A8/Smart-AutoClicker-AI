@@ -50,5 +50,19 @@ internal object AiModule {
                     )
                 }
             }
+
+            override suspend fun testConnection(config: AiConfig): String {
+                // Build a CloudVisionModel directly against the resolved endpoint so we exercise the real HTTP path.
+                val probeConfig = when (config.backend) {
+                    VisionBackend.CLOUD -> config
+                    VisionBackend.LOCAL -> config.copy(
+                        protocol = CloudProtocol.OPENAI_COMPATIBLE,
+                        baseUrl = LocalServerConfig().let { "http://${it.host}:${it.port}/v1" },
+                        apiKey = "local",
+                        requestTimeoutMs = LocalServerConfig().requestTimeoutMs,
+                    )
+                }
+                return CloudVisionModel(probeConfig).testConnection()
+            }
         }
 }

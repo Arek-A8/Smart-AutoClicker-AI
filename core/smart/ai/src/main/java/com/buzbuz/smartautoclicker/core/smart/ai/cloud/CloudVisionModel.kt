@@ -17,7 +17,9 @@
 package com.buzbuz.smartautoclicker.core.smart.ai.cloud
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.Rect
+import android.util.Log
 import com.buzbuz.smartautoclicker.core.smart.ai.AgentAction
 import com.buzbuz.smartautoclicker.core.smart.ai.AgentStep
 import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
@@ -54,15 +56,40 @@ class CloudVisionModel(
 
     override suspend fun detect(frame: Bitmap, prompt: String, area: Rect?): VisionDetectionResult =
         withContext(ioDispatcher) {
-            val sent = frame.downscaledTo(config.maxImageDimensionPx)
-            val (scaleX, scaleY) = sent.scaleBackTo(frame)
-            val raw = transport.request(
-                systemText = Prompts.detectSystem(sent.width, sent.height),
-                userText = Prompts.detectUser(prompt),
-                imageBase64Jpeg = sent.toJpegBase64(),
-            )
-            parseDetection(raw, scaleX, scaleY)
+            try {
+                val sent = frame.downscaledTo(config.maxImageDimensionPx)
+                val (scaleX, scaleY) = sent.scaleBackTo(frame)
+                Log.i(TAG, "detect(\"$prompt\") sending ${sent.width}x${sent.height} to ${config.backend}")
+                val raw = transport.request(
+                    systemText = Prompts.detectSystem(sent.width, sent.height),
+                    userText = Prompts.detectUser(prompt),
+                    imageBase64Jpeg = sent.toJpegBase64(),
+                )
+                parseDetection(raw, scaleX, scaleY).also { Log.i(TAG, "detect result: $it") }
+            } catch (t: Throwable) {
+                Log.e(TAG, "detect failed: ${t.message}", t)
+                VisionDetectionResult.NOT_FOUND
+            }
         }
+
+    /**
+     * Send a tiny probe image to verify connectivity and that the endpoint returns usable text. Returns a
+     * human-readable result string (never throws) for display in the AI settings "test connection" action.
+     */
+    suspend fun testConnection(): String = withContext(ioDispatcher) {
+        try {
+            val probe = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.RED) }
+            val raw = transport.request(
+                systemText = Prompts.detectSystem(64, 64),
+                userText = Prompts.detectUser("a red square"),
+                imageBase64Jpeg = probe.toJpegBase64(),
+            )
+            "OK - endpoint reachable.\nModel replied:\n${raw.take(300)}"
+        } catch (t: Throwable) {
+            Log.e(TAG, "testConnection failed", t)
+            "FAILED: ${t.message ?: t.javaClass.simpleName}"
+        }
+    }
 
     override suspend fun decideAction(frame: Bitmap, goal: String, history: List<AgentStep>): AgentAction =
         withContext(ioDispatcher) {
@@ -79,4 +106,8 @@ class CloudVisionModel(
     /** Scale factors mapping coordinates in [this] (the sent image) back to [original]. */
     private fun Bitmap.scaleBackTo(original: Bitmap): Pair<Float, Float> =
         original.width.toFloat() / width.toFloat() to original.height.toFloat() / height.toFloat()
+
+    private companion object {
+        const val TAG = "AiCloudVisionModel"
+    }
 }
