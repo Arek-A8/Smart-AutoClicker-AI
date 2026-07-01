@@ -16,14 +16,17 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <!--
-  Cleartext HTTP is blocked by default on Android 9+. The local AI vision backend talks to a llama.cpp
-  server on the loopback interface over plain HTTP, so we permit cleartext ONLY to localhost. All other
-  destinations keep the secure default (HTTPS required).
+  Cleartext HTTP is blocked by default on Android 9+. The AI vision backend talks to a llama.cpp / LM Studio /
+  Ollama server that exposes an OpenAI-compatible endpoint over plain HTTP. That server may run on this device
+  (loopback) or on another machine on the local network, addressed by a raw IP (e.g. 192.168.101.4).
+
+  Android's network-security <domain> matching is DNS-name based and does NOT understand IP/CIDR subnets, so private
+  LAN IPs cannot be expressed as a range here. We therefore permit cleartext at the base level (covers loopback and
+  any LAN IP the user points at). This is acceptable because:
+    - the user explicitly configures the server address, and LAN model servers are plain HTTP by design;
+    - cloud providers are still reached over HTTPS (the app sends https:// URLs for those).
+  If stricter policy is later required, pin specific hostnames in a <domain-config> instead.
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">127.0.0.1</domain>
-        <domain includeSubdomains="false">localhost</domain>
-        <domain includeSubdomains="false">10.0.2.2</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

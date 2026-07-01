@@ -145,6 +145,10 @@
     <string name="field_ai_config_local_hint">Local mode sends frames to a llama.cpp server on http://127.0.0.1:8080 and uses whatever model is currently loaded. Cloud fields are ignored when local is on.</string>
     <string name="field_ai_config_test">Test connection</string>
     <string name="field_ai_config_testing">Sending a test image to the model… this can take a while on a local CPU model.</string>
+    <string name="field_ai_config_fetch_models">Fetch models</string>
+    <string name="field_ai_config_fetching_models">Querying the server for available models…</string>
+    <string name="field_ai_config_pick_model">Pick a model</string>
+    <string name="field_ai_config_fetch_models_failed">Could not fetch models: %1$s</string>
 
 
     <!-- Legacy condition migration dialog  ======================================================================== -->

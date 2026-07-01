@@ -60,3 +60,35 @@ internal fun httpPostJson(
         connection.disconnect()
     }
 }
+
+/**
+ * Minimal JSON GET over [HttpURLConnection], used to enumerate the models a server exposes (e.g. OpenAI-compatible
+ * GET /v1/models, or Gemini ListModels). Blocking; callers must invoke from an IO dispatcher.
+ *
+ * @param url full request URL.
+ * @param headers additional request headers (e.g. Authorization).
+ * @param timeoutMs connect and read timeout.
+ */
+internal fun httpGet(
+    url: String,
+    headers: Map<String, String>,
+    timeoutMs: Int,
+): HttpResult {
+    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+        requestMethod = "GET"
+        connectTimeout = timeoutMs
+        readTimeout = timeoutMs
+        setRequestProperty("Accept", "application/json")
+        headers.forEach { (k, v) -> setRequestProperty(k, v) }
+    }
+    try {
+        val code = connection.responseCode
+        val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+        val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+        return HttpResult(code, body)
+    } catch (e: IOException) {
+        throw e
+    } finally {
+        connection.disconnect()
+    }
+}

@@ -26,6 +26,7 @@ import com.buzbuz.smartautoclicker.core.common.quality.domain.QualityRepository
 import com.buzbuz.smartautoclicker.core.settings.domain.SettingsRepository
 import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
 import com.buzbuz.smartautoclicker.core.smart.ai.AiSettings
+import com.buzbuz.smartautoclicker.core.smart.ai.ModelListResult
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionModelProvider
 import com.buzbuz.smartautoclicker.feature.revenue.IRevenueRepository
 import com.buzbuz.smartautoclicker.feature.revenue.UserBillingState
@@ -53,6 +54,9 @@ class SettingsViewModel @Inject constructor(
 
     /** Probe the given [config] end-to-end and return a human-readable pass/fail message. */
     suspend fun testAiConnection(config: AiConfig): String = visionModelProvider.testConnection(config)
+
+    /** Query the configured server for its available model ids so the user can pick one. */
+    suspend fun listAiModels(config: AiConfig): ModelListResult = visionModelProvider.listModels(config)
 
     val isScenarioFiltersUiEnabled: Flow<Boolean> =
         settingsRepository.isFilterScenarioUiEnabledFlow

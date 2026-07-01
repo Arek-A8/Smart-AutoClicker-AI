@@ -19,10 +19,12 @@ package com.buzbuz.smartautoclicker.core.smart.ai.di
 import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
 import com.buzbuz.smartautoclicker.core.smart.ai.AiSettings
 import com.buzbuz.smartautoclicker.core.smart.ai.CloudProtocol
+import com.buzbuz.smartautoclicker.core.smart.ai.ModelListResult
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionBackend
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionModel
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionModelProvider
 import com.buzbuz.smartautoclicker.core.smart.ai.cloud.CloudVisionModel
+import com.buzbuz.smartautoclicker.core.smart.ai.cloud.ModelLister
 import com.buzbuz.smartautoclicker.core.smart.ai.local.LocalServerConfig
 import com.buzbuz.smartautoclicker.core.smart.ai.local.LocalVisionModel
 
@@ -30,6 +32,9 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 import javax.inject.Singleton
 
@@ -54,16 +59,25 @@ internal object AiModule {
 
             override suspend fun testConnection(config: AiConfig): String {
                 // Build a CloudVisionModel directly against the resolved endpoint so we exercise the real HTTP path.
-                val probeConfig = when (config.backend) {
-                    VisionBackend.CLOUD -> config
-                    VisionBackend.LOCAL -> config.copy(
-                        protocol = CloudProtocol.OPENAI_COMPATIBLE,
-                        baseUrl = LocalServerConfig().let { "http://${it.host}:${it.port}/v1" },
-                        apiKey = "local",
-                        requestTimeoutMs = LocalServerConfig().requestTimeoutMs,
-                    )
-                }
-                return CloudVisionModel(probeConfig).testConnection()
+                return CloudVisionModel(config.resolvedForRequests()).testConnection()
             }
+
+            override suspend fun listModels(config: AiConfig): ModelListResult =
+                withContext(Dispatchers.IO) { ModelLister.listModels(config.resolvedForRequests()) }
         }
+
+    /**
+     * Resolve a stored [AiConfig] into one that carries a concrete endpoint. For [VisionBackend.LOCAL] this points at
+     * the local llama-server's OpenAI-compatible endpoint; for [VisionBackend.CLOUD] the user-entered values are used
+     * as-is.
+     */
+    private fun AiConfig.resolvedForRequests(): AiConfig = when (backend) {
+        VisionBackend.CLOUD -> this
+        VisionBackend.LOCAL -> copy(
+            protocol = CloudProtocol.OPENAI_COMPATIBLE,
+            baseUrl = LocalServerConfig().let { "http://${it.host}:${it.port}/v1" },
+            apiKey = "local",
+            requestTimeoutMs = LocalServerConfig().requestTimeoutMs,
+        )
+    }
 }

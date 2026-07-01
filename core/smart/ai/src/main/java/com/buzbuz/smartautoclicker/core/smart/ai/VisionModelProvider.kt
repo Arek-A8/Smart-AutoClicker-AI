@@ -32,4 +32,18 @@ interface VisionModelProvider {
      * Never throws. Used by the AI settings "test connection" action.
      */
     suspend fun testConnection(config: AiConfig): String
+
+    /**
+     * Query the configured server for the list of model ids it exposes (OpenAI-compatible GET /v1/models, or Gemini
+     * ListModels), so the user can pick one instead of typing it. Never throws.
+     *
+     * @return [ModelListResult.Success] with the sorted model ids, or [ModelListResult.Failure] with a reason.
+     */
+    suspend fun listModels(config: AiConfig): ModelListResult
+}
+
+/** Public outcome of [VisionModelProvider.listModels]. */
+sealed interface ModelListResult {
+    data class Success(val modelIds: List<String>) : ModelListResult
+    data class Failure(val reason: String) : ModelListResult
 }

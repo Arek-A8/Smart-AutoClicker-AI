@@ -22,6 +22,7 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -30,6 +31,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 
 import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
+import com.buzbuz.smartautoclicker.core.smart.ai.ModelListResult
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionBackend
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -169,17 +171,23 @@ class SettingsFragment : Fragment() {
         }
         container.addView(modelField)
 
-        container.addView(TextView(ctx).apply {
-            text = ctx.getString(R.string.field_ai_config_local_hint)
-            setPadding(0, dp(8), 0, 0)
-        })
-
         fun currentConfig(): AiConfig = config.copy(
             backend = if (useLocalSwitch.isChecked) VisionBackend.LOCAL else VisionBackend.CLOUD,
             baseUrl = baseUrlField.text.toString().trim(),
             apiKey = apiKeyField.text.toString().trim(),
             model = modelField.text.toString().trim(),
         )
+
+        val fetchModelsButton = Button(ctx).apply {
+            text = ctx.getString(R.string.field_ai_config_fetch_models)
+            setOnClickListener { fetchAndPickModel(currentConfig()) { picked -> modelField.setText(picked) } }
+        }
+        container.addView(fetchModelsButton)
+
+        container.addView(TextView(ctx).apply {
+            text = ctx.getString(R.string.field_ai_config_local_hint)
+            setPadding(0, dp(8), 0, 0)
+        })
 
         MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.field_ai_config_title)
@@ -213,6 +221,37 @@ class SettingsFragment : Fragment() {
                 .setMessage(result)
                 .setPositiveButton(android.R.string.ok, null)
                 .show()
+        }
+    }
+
+    private fun fetchAndPickModel(config: AiConfig, onPicked: (String) -> Unit) {
+        val ctx = requireContext()
+        val progress = MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.field_ai_config_fetch_models)
+            .setMessage(getString(R.string.field_ai_config_fetching_models))
+            .setCancelable(false)
+            .show()
+
+        lifecycleScope.launch {
+            val result = viewModel.listAiModels(config)
+            progress.dismiss()
+            when (result) {
+                is ModelListResult.Success -> {
+                    val ids = result.modelIds.toTypedArray()
+                    MaterialAlertDialogBuilder(ctx)
+                        .setTitle(R.string.field_ai_config_pick_model)
+                        .setItems(ids) { _, which -> onPicked(ids[which]) }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
+                is ModelListResult.Failure -> {
+                    MaterialAlertDialogBuilder(ctx)
+                        .setTitle(R.string.field_ai_config_fetch_models)
+                        .setMessage(getString(R.string.field_ai_config_fetch_models_failed, result.reason))
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                }
+            }
         }
     }
 
