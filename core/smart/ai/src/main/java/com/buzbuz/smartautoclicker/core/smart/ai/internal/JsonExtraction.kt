@@ -17,31 +17,52 @@
 package com.buzbuz.smartautoclicker.core.smart.ai.internal
 
 /**
- * Extract the first balanced top-level JSON object from [raw] model output.
+ * Extract the JSON answer object from [raw] model output.
  *
  * Vision models frequently wrap the requested JSON in prose or a chain-of-thought block despite instructions to the
- * contrary (observed with Gemma e2b's "<|channel>thought" preamble). This scans for the first '{' and returns the
- * substring up to its matching '}', accounting for braces inside strings. Returns null if no balanced object is found.
+ * contrary (observed with Gemma e2b's "<|channel>thought" preamble). Crucially, that reasoning text often echoes the
+ * requested JSON *schema* (e.g. `{"action":"tap","x":<int>,...}`) BEFORE the real answer, so returning the first
+ * balanced object would return the schema echo (no real coordinates) rather than the answer.
+ *
+ * This scans all balanced top-level objects (accounting for braces inside strings) and returns the last one that
+ * contains any of [preferKeys]; if none match, it returns the last balanced object; if there are none, null.
  */
-internal fun extractFirstJsonObject(raw: String): String? {
-    val start = raw.indexOf('{')
-    if (start < 0) return null
+internal fun extractJsonObject(raw: String, preferKeys: List<String> = emptyList()): String? {
+    val objects = balancedTopLevelObjects(raw)
+    if (objects.isEmpty()) return null
+    if (preferKeys.isNotEmpty()) {
+        objects.lastOrNull { obj -> preferKeys.any { key -> obj.contains("\"$key\"") } }
+            ?.let { return it }
+    }
+    return objects.last()
+}
 
+/** All balanced top-level `{...}` substrings in [raw], in order, ignoring braces inside JSON strings. */
+private fun balancedTopLevelObjects(raw: String): List<String> {
+    val results = mutableListOf<String>()
+    var start = -1
     var depth = 0
     var inString = false
     var escaped = false
-    for (i in start until raw.length) {
+    for (i in raw.indices) {
         val c = raw[i]
         when {
             escaped -> escaped = false
             c == '\\' && inString -> escaped = true
             c == '"' -> inString = !inString
-            !inString && c == '{' -> depth++
-            !inString && c == '}' -> {
+            inString -> {}
+            c == '{' -> {
+                if (depth == 0) start = i
+                depth++
+            }
+            c == '}' && depth > 0 -> {
                 depth--
-                if (depth == 0) return raw.substring(start, i + 1)
+                if (depth == 0 && start >= 0) {
+                    results.add(raw.substring(start, i + 1))
+                    start = -1
+                }
             }
         }
     }
-    return null
+    return results
 }

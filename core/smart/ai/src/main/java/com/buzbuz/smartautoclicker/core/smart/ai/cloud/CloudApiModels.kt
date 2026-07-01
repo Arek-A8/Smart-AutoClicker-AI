@@ -95,24 +95,6 @@ internal data class DetectPayload(
     val box: List<Int>? = null,
 )
 
-/**
- * Structured payload we instruct the model to return for a [VisionModel.decideAction] call.
- *
- * @param action one of: tap, swipe, wait, done, fail.
- * @param x / y tap coordinates (action == tap), in pixels of the (possibly downscaled) frame.
- * @param fromX / fromY / toX / toY swipe coordinates (action == swipe).
- * @param durationMs duration for swipe / wait.
- * @param reason optional rationale (used for done / fail and for history notes).
- */
-@Serializable
-internal data class ActionPayload(
-    val action: String = "fail",
-    val x: Int? = null,
-    val y: Int? = null,
-    val fromX: Int? = null,
-    val fromY: Int? = null,
-    val toX: Int? = null,
-    val toY: Int? = null,
-    val durationMs: Long? = null,
-    val reason: String? = null,
-)
+// NOTE: decideAction output is parsed leniently as a JsonObject in ResultParsing.parseAction (not via a typed payload),
+// because vision models emit coordinates inconsistently (int, float, or string) and often echo the schema before the
+// real answer. A rigid typed payload silently coerced missing coordinates to 0, causing taps at the top-left corner.

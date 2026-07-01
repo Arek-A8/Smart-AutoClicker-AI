@@ -19,9 +19,11 @@ package com.buzbuz.smartautoclicker.core.smart.ai.internal
 import android.graphics.Rect
 import com.buzbuz.smartautoclicker.core.smart.ai.AgentAction
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionDetectionResult
-import com.buzbuz.smartautoclicker.core.smart.ai.cloud.ActionPayload
 import com.buzbuz.smartautoclicker.core.smart.ai.cloud.DetectPayload
 import com.buzbuz.smartautoclicker.core.smart.ai.cloud.cloudJson
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Parse a raw model output into a [VisionDetectionResult], scaling pixel coordinates from the sent (downscaled) image
@@ -32,7 +34,7 @@ import com.buzbuz.smartautoclicker.core.smart.ai.cloud.cloudJson
  * @param scaleY original_frame_height / sent_image_height.
  */
 internal fun parseDetection(raw: String, scaleX: Float, scaleY: Float): VisionDetectionResult {
-    val json = extractFirstJsonObject(raw) ?: return VisionDetectionResult.NOT_FOUND
+    val json = extractJsonObject(raw, preferKeys = listOf("found", "box")) ?: return VisionDetectionResult.NOT_FOUND
     val payload = runCatching { cloudJson.decodeFromString<DetectPayload>(json) }.getOrNull()
         ?: return VisionDetectionResult.NOT_FOUND
 
@@ -56,21 +58,49 @@ internal fun parseDetection(raw: String, scaleX: Float, scaleY: Float): VisionDe
  * back to the original frame. Unparseable output yields [AgentAction.Fail].
  */
 internal fun parseAction(raw: String, scaleX: Float, scaleY: Float): AgentAction {
-    val json = extractFirstJsonObject(raw) ?: return AgentAction.Fail("No JSON in model output")
-    val p = runCatching { cloudJson.decodeFromString<ActionPayload>(json) }.getOrNull()
+    val json = extractJsonObject(raw, preferKeys = listOf("action")) ?: return AgentAction.Fail("No JSON in model output")
+    val obj = runCatching { cloudJson.decodeFromString<JsonObject>(json) }.getOrNull()
         ?: return AgentAction.Fail("Unparseable action JSON")
 
-    fun sx(v: Int?) = ((v ?: 0) * scaleX).toInt()
-    fun sy(v: Int?) = ((v ?: 0) * scaleY).toInt()
+    val action = obj.stringField("action")?.lowercase() ?: return AgentAction.Fail("Missing action")
+    val reason = obj.stringField("reason")
+    val durationMs = obj.numberField("durationMs")?.toLong()
 
-    return when (p.action.lowercase()) {
-        "tap" -> AgentAction.Tap(sx(p.x), sy(p.y))
-        "swipe" -> AgentAction.Swipe(
-            sx(p.fromX), sy(p.fromY), sx(p.toX), sy(p.toY),
-            (p.durationMs ?: 300L).coerceAtLeast(1L),
-        )
-        "wait" -> AgentAction.Wait((p.durationMs ?: 500L).coerceAtLeast(0L))
-        "done" -> AgentAction.Done(p.reason)
-        else -> AgentAction.Fail(p.reason)
+    fun sx(v: Double) = (v * scaleX).toInt()
+    fun sy(v: Double) = (v * scaleY).toInt()
+
+    return when (action) {
+        "tap" -> {
+            val x = obj.numberField("x")
+            val y = obj.numberField("y")
+            if (x == null || y == null) AgentAction.Fail("tap without coordinates: $json")
+            else AgentAction.Tap(sx(x), sy(y))
+        }
+        "swipe" -> {
+            val fromX = obj.numberField("fromX")
+            val fromY = obj.numberField("fromY")
+            val toX = obj.numberField("toX")
+            val toY = obj.numberField("toY")
+            if (fromX == null || fromY == null || toX == null || toY == null)
+                AgentAction.Fail("swipe without coordinates: $json")
+            else AgentAction.Swipe(
+                sx(fromX), sy(fromY), sx(toX), sy(toY),
+                (durationMs ?: 300L).coerceAtLeast(1L),
+            )
+        }
+        "wait" -> AgentAction.Wait((durationMs ?: 500L).coerceAtLeast(0L))
+        "done" -> AgentAction.Done(reason)
+        else -> AgentAction.Fail(reason)
     }
 }
+
+/** Read a string field, tolerating models that omit it. */
+private fun JsonObject.stringField(key: String): String? =
+    (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
+
+/**
+ * Read a numeric field leniently: accepts JSON numbers (int or float) and numeric strings, since vision models
+ * frequently emit coordinates as floats ("x": 512.0) or strings ("x": "512"). Returns null if absent or non-numeric.
+ */
+private fun JsonObject.numberField(key: String): Double? =
+    (this[key] as? JsonPrimitive)?.content?.toDoubleOrNull()
