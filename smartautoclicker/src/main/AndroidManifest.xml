@@ -26,12 +26,15 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <!-- Needed to keep the screen active while detecting, only if defined by the user. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Needed by the AI vision backend to reach a local llama.cpp server / cloud vision endpoints. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name="${smartAutoClickerApplication}"
         android:allowBackup="false"
         android:icon="@mipmap/ic_smart_auto_clicker"
         android:label="${appName}"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_smart_auto_clicker_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
