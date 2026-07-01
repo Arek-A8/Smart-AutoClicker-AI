@@ -281,12 +281,22 @@ internal class ConditionsVerifier(
             // threshold is a percentage (0-100); model confidence is 0-1.
             val meetsThreshold = detectionResult.confidence >= (condition.threshold / 100f)
             val detected = detectionResult.found && meetsThreshold
+
+            // The model may report a detection without a usable bounding box (small vision models often omit it).
+            // In that case fall back to the center of the restricted detection area, or the whole frame center, so a
+            // "click on this condition" action still targets a sensible point instead of being dropped or hitting 0,0.
+            val position: android.graphics.Point? =
+                if (!detected) null
+                else detectionResult.location?.let { android.graphics.Point(it.centerX(), it.centerY()) }
+                    ?: condition.detectionArea?.let { android.graphics.Point(it.centerX(), it.centerY()) }
+                    ?: android.graphics.Point(frame.width / 2, frame.height / 2)
+
             ProcessedConditionResult.Screen(
                 isFulfilled = detected == condition.shouldBeDetected,
                 haveBeenDetected = detected,
                 condition = condition,
                 confidenceRate = detectionResult.confidence.toDouble(),
-                position = detectionResult.location?.let { android.graphics.Point(it.centerX(), it.centerY()) },
+                position = position,
                 size = null,
             )
         }

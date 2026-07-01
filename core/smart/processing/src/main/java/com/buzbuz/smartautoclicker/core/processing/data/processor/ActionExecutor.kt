@@ -142,11 +142,19 @@ internal class ActionExecutor(
             return null
         }
 
+        val position = result.position
+        if (position == null) {
+            // A condition can be fulfilled without a usable location (e.g. an AI detection that returned a
+            // confidence but no bounding box). Clicking (0,0) in that case is never what the user wants, so abort.
+            Log.w(TAG, "Click on condition has no position, can't execute")
+            return null
+        }
+
         return Path().apply {
             moveTo(
                 position = Point(
-                    (result.position?.x ?: 0) + (click.clickOffset?.x ?: 0),
-                    (result.position?.y ?: 0) + (click.clickOffset?.y ?: 0),
+                    position.x + (click.clickOffset?.x ?: 0),
+                    position.y + (click.clickOffset?.y ?: 0),
                 ),
                 random = random,
             )
