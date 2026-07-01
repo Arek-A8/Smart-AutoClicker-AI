@@ -89,12 +89,16 @@ class ScalingManager @Inject constructor(
         conditionScalingInfo.clear()
 
         screenConditions.forEach { screenCondition ->
-            conditionScalingInfo[screenCondition.id.databaseId] = when (screenCondition) {
+            val scalingInfo = when (screenCondition) {
                 is ScreenCondition.Color -> screenCondition.toColorScalingInfo(scaledScreenSize)
                 is ScreenCondition.Image -> screenCondition.toImageScalingInfo(scaledScreenSize)
                 is ScreenCondition.Number -> screenCondition.toNumberScalingInfo(scaledScreenSize)
                 is ScreenCondition.Text -> screenCondition.toTextScalingInfo(scaledScreenSize)
+                // AI conditions send the full frame to the vision model and work in its own pixel space,
+                // so they require no native-detector scaling info.
+                is ScreenCondition.Ai -> null
             }
+            if (scalingInfo != null) conditionScalingInfo[screenCondition.id.databaseId] = scalingInfo
         }
 
         Log.i(TAG, "Scaling data refresh for ${screenConditions.size} conditions")

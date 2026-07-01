@@ -108,4 +108,7 @@ data class ConditionEntity(
     // ConditionType.ON_TEXT_DETECTED
     @ColumnInfo(name = "text_to_detect") val textToDetect: String? = null,
     @ColumnInfo(name = "text_alphabet") val textAlphabet: String? = null,
+
+    // ConditionType.ON_AI_DETECTED
+    @ColumnInfo(name = "ai_prompt") val aiPrompt: String? = null,
 ) : EntityWithId

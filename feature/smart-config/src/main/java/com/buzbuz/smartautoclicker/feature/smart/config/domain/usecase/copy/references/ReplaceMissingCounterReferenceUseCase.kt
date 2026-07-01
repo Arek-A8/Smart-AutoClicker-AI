@@ -135,6 +135,7 @@ class ReplaceMissingCounterReferenceUseCase @Inject constructor() {
             is ScreenCondition.Color,
             is ScreenCondition.Image,
             is ScreenCondition.Text,
+            is ScreenCondition.Ai,
             is TriggerCondition.OnBroadcastReceived,
             is TriggerCondition.OnTimerReached -> {
                 Log.e(TAG, "Can't replace counter reference, condition type is not supported.")

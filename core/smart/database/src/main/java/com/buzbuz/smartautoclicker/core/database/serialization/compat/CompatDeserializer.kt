@@ -272,6 +272,8 @@ internal open class CompatDeserializer : Deserializer {
             ConditionType.ON_NUMBER_DETECTED -> deserializeConditionNumberDetected(jsonCondition)
             ConditionType.ON_TEXT_DETECTED -> deserializeConditionTextDetected(jsonCondition)
             ConditionType.ON_TIMER_REACHED -> deserializeConditionTimerReached(jsonCondition)
+            // AI conditions did not exist in legacy backup formats handled by this compat deserializer.
+            ConditionType.ON_AI_DETECTED -> null
             null -> null
         }
 

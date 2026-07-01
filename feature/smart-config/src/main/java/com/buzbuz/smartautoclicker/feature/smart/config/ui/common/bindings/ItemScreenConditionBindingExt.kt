@@ -91,6 +91,15 @@ fun IncludeScreenConditionCardBinding.bind(
             conditionText.text = condition.text
             null
         }
+
+        is ScreenCondition.Ai -> {
+            conditionDetectionType.visibility = View.GONE
+            conditionImage.visibility = View.GONE
+            conditionText.visibility = View.VISIBLE
+
+            conditionText.text = condition.prompt
+            null
+        }
     }
 }
 

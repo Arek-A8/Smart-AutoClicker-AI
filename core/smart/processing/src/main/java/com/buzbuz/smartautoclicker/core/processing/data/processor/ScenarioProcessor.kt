@@ -56,7 +56,11 @@ internal class ScenarioProcessor(
     unblockWorkaroundEnabled: Boolean = false,
     private val onStopRequested: () -> Unit,
     private val progressListener: SmartProcessingListener?,
+    visionModel: com.buzbuz.smartautoclicker.core.smart.ai.VisionModel? = null,
 ) {
+
+    /** The current screen frame, set for each screen-processing pass so AI conditions can access it. */
+    private var currentScreenFrame: Bitmap? = null
 
     /** Handle the processing state of the scenario. */
     @VisibleForTesting internal val processingState: ProcessingState = ProcessingState(
@@ -72,6 +76,8 @@ internal class ScenarioProcessor(
         scalingManager = scalingManager,
         bitmapSupplier = bitmapSupplier,
         progressListener = progressListener,
+        visionModel = visionModel,
+        currentFrameSupplier = { currentScreenFrame },
     )
     /** Execute the detected event actions. */
     private val actionExecutor = ActionExecutor(
@@ -151,6 +157,7 @@ internal class ScenarioProcessor(
 
     private suspend fun processScreenEvents(screenFrame: Bitmap, events: Collection<ScreenEvent>) {
         // Set the current screen image
+        currentScreenFrame = screenFrame
         imageDetector.setScreenBitmap(screenFrame, processingTag)
 
         try {

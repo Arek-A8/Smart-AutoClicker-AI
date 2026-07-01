@@ -118,6 +118,13 @@ class EventCardViewHolder(
 
                     conditionText.text = condition.text
                 }
+
+                is ScreenCondition.Ai -> {
+                    conditionImage.visibility = View.GONE
+                    conditionText.visibility = View.VISIBLE
+
+                    conditionText.text = condition.prompt
+                }
             }
         }
     }

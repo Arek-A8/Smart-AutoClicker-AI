@@ -92,6 +92,8 @@ enum class ConditionType {
     ON_TEXT_DETECTED,
     /** Toggle the enabled state of an event. */
     ON_TIMER_REACHED,
+    /** Condition fulfilled when a vision model detects a natural-language described target on screen. */
+    ON_AI_DETECTED,
 }
 
 

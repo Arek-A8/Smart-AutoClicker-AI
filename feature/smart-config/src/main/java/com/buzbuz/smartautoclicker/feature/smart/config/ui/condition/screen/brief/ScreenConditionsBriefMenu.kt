@@ -204,6 +204,9 @@ class ScreenConditionsBriefMenu(
                         ScreenConditionTypeChoice.OnTextDetected -> viewModel.createTextCondition(context) { condition ->
                             showScreenConditionConfigDialog(condition)
                         }
+                        ScreenConditionTypeChoice.OnAiDetected -> viewModel.createAiCondition(context) { condition ->
+                            showScreenConditionConfigDialog(condition)
+                        }
                     }
                 },
             ),
@@ -251,6 +254,10 @@ class ScreenConditionsBriefMenu(
                 is ScreenCondition.Image -> ImageConditionDialog(conditionConfigDialogListener)
                 is ScreenCondition.Number -> NumberConditionDialog(conditionConfigDialogListener)
                 is ScreenCondition.Text -> TextConditionDialog(conditionConfigDialogListener)
+                is ScreenCondition.Ai -> com.buzbuz.smartautoclicker.feature.smart.config.ui.condition.screen.ai.AiConditionDialog(
+                    listener = conditionConfigDialogListener,
+                    editHandle = viewModel,
+                )
             },
             hideCurrent = true,
         )

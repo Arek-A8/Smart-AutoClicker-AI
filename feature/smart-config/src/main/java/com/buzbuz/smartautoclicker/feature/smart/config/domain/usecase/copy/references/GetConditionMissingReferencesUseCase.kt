@@ -45,6 +45,7 @@ class GetConditionMissingReferencesUseCase @Inject constructor(
             is ScreenCondition.Color,
             is ScreenCondition.Image,
             is ScreenCondition.Text,
+            is ScreenCondition.Ai,
             is TriggerCondition.OnBroadcastReceived,
             is TriggerCondition.OnTimerReached -> emptyList()
         }

@@ -32,6 +32,7 @@ import com.buzbuz.smartautoclicker.core.processing.data.scaling.ScalingManager
 import com.buzbuz.smartautoclicker.core.processing.data.scaling.ScreenConditionScalingInfo
 import com.buzbuz.smartautoclicker.core.processing.domain.SmartProcessingListener
 import com.buzbuz.smartautoclicker.core.processing.domain.model.ProcessedConditionResult
+import com.buzbuz.smartautoclicker.core.smart.ai.VisionModel
 
 import kotlinx.coroutines.yield
 
@@ -41,6 +42,8 @@ internal class ConditionsVerifier(
     private val scalingManager: ScalingManager,
     private val bitmapSupplier: suspend (String, Int, Int) -> Bitmap?,
     private val progressListener: SmartProcessingListener? = null,
+    private val visionModel: VisionModel? = null,
+    private val currentFrameSupplier: () -> Bitmap? = { null },
 ) {
 
     /** List of results for the last call to verifyConditions. */
@@ -83,6 +86,7 @@ internal class ConditionsVerifier(
             is ScreenCondition.Image -> verifyImageCondition(condition)
             is ScreenCondition.Text -> verifyTextCondition(condition)
             is ScreenCondition.Number -> verifyNumberCondition(condition)
+            is ScreenCondition.Ai -> verifyAiCondition(condition)
             is TriggerCondition -> condition.toConditionResult(verifyTriggerCondition(condition))
         }
 
@@ -251,6 +255,41 @@ internal class ConditionsVerifier(
             confidenceRate = detectionResult.confidenceRate,
             size = scalingManager.scaleUpDetectionResult(detectionResult.size),
         )
+
+        progressListener?.onScreenConditionProcessingCompleted(result)
+        return result
+    }
+
+    private suspend fun verifyAiCondition(condition: ScreenCondition.Ai): ProcessedConditionResult.Screen {
+        progressListener?.onScreenConditionProcessingStarted()
+
+        val model = visionModel
+        val frame = currentFrameSupplier()
+        if (model == null || frame == null || !model.isAvailable()) {
+            val invalid = condition.toInvalidConditionResult()
+            progressListener?.onScreenConditionProcessingCompleted(invalid)
+            return invalid
+        }
+
+        val detectionResult = runCatching {
+            model.detect(frame, condition.prompt, condition.detectionArea)
+        }.getOrNull()
+
+        val result = if (detectionResult == null) {
+            condition.toInvalidConditionResult()
+        } else {
+            // threshold is a percentage (0-100); model confidence is 0-1.
+            val meetsThreshold = detectionResult.confidence >= (condition.threshold / 100f)
+            val detected = detectionResult.found && meetsThreshold
+            ProcessedConditionResult.Screen(
+                isFulfilled = detected == condition.shouldBeDetected,
+                haveBeenDetected = detected,
+                condition = condition,
+                confidenceRate = detectionResult.confidence.toDouble(),
+                position = detectionResult.location?.let { android.graphics.Point(it.centerX(), it.centerY()) },
+                size = null,
+            )
+        }
 
         progressListener?.onScreenConditionProcessingCompleted(result)
         return result

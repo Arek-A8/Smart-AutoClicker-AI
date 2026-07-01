@@ -64,7 +64,9 @@ android {
     if (project.isBuildForVariant(KlickrFlavour.F_DROID, KlickrBuildType.DEBUG)) {
         buildTypes {
             debug {
-                applicationIdSuffix = ".debug"
+                // Co-install alongside the original Klick'r for side-by-side comparison of the AI build.
+                applicationIdSuffix = ".ai"
+                resValue("string", "app_name", "Klickr AI")
             }
         }
     }

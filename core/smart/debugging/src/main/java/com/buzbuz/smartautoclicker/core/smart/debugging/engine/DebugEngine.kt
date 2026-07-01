@@ -324,7 +324,8 @@ private fun ProcessedConditionResult.Screen.getDetectionArea(): Rect? {
 
         is ScreenCondition.Image,
         is ScreenCondition.Text,
-        is ScreenCondition.Number ->
+        is ScreenCondition.Number,
+        is ScreenCondition.Ai ->
             Size(size.x / 2,  size.y / 2)
     }
 

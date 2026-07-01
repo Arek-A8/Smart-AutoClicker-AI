@@ -88,6 +88,9 @@ class ConditionAreaSelectorViewModel @Inject constructor(
                     minimalArea = Rect(0, 0, MIN_TEXT_DETECTION_WIDTH, MIN_TEXT_DETECTION_HEIGHT),
                 )
             }
+
+            // AI conditions optionally search the whole screen; no in-app area selector in the minimal UI.
+            is ScreenCondition.Ai -> null
         }
 }
 

@@ -67,6 +67,9 @@
     <string name="item_number_condition_title">On number detected</string>
     <string name="item_number_condition_desc">Fulfilled when a number is visible somewhere on the screen</string>
 
+    <string name="item_ai_condition_title">On AI detection</string>
+    <string name="item_ai_condition_desc">Fulfilled when an AI vision model detects a described target on the screen</string>
+
     <string name="item_copy_title">Copy</string>
     <string name="item_copy_desc">Copy an existing Action from any Scenarios</string>
 

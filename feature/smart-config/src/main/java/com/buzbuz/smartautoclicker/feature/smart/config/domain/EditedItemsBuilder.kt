@@ -186,6 +186,21 @@ class EditedItemsBuilder internal constructor(
         )
     }
 
+    fun createNewAiCondition(context: Context): ScreenCondition.Ai {
+        val id = conditionsIdCreator.generateNewIdentifier()
+
+        return ScreenCondition.Ai(
+            id = id,
+            eventId = getEditedEventIdOrThrow(),
+            name = defaultValues.conditionName(context),
+            threshold = defaultValues.conditionThreshold(context),
+            shouldBeDetected = defaultValues.conditionShouldBeDetected(),
+            priority = 0,
+            prompt = "",
+            detectionArea = null,
+        )
+    }
+
     suspend fun createNewImageCondition(context: Context, area: Rect, bitmap: Bitmap): ScreenCondition.Image {
         val id = conditionsIdCreator.generateNewIdentifier()
         val newPath = bitmapRepository.saveImageConditionBitmap(
@@ -213,6 +228,7 @@ class EditedItemsBuilder internal constructor(
             is ScreenCondition.Image -> createNewImageConditionFrom(condition, eventId)
             is ScreenCondition.Number -> createNewNumberConditionFrom(condition, eventId)
             is ScreenCondition.Text -> createNewTextConditionFrom(condition, eventId)
+            is ScreenCondition.Ai -> createNewAiConditionFrom(condition, eventId)
         }
 
     private fun createNewColorConditionFrom(condition: ScreenCondition.Color, eventId: Identifier = getEditedEventIdOrThrow()): ScreenCondition.Color =
@@ -243,6 +259,14 @@ class EditedItemsBuilder internal constructor(
             eventId = eventId,
             name = "" + condition.name,
             text = "" + condition.text,
+        )
+
+    private fun createNewAiConditionFrom(condition: ScreenCondition.Ai, eventId: Identifier = getEditedEventIdOrThrow()): ScreenCondition.Ai =
+        condition.copy(
+            id = conditionsIdCreator.generateNewIdentifier(),
+            eventId = eventId,
+            name = "" + condition.name,
+            prompt = "" + condition.prompt,
         )
 
     fun createNewOnBroadcastReceived(context: Context): TriggerCondition.OnBroadcastReceived =

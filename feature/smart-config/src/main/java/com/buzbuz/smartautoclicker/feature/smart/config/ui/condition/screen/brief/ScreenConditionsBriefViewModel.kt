@@ -79,7 +79,8 @@ class ScreenConditionsBriefViewModel @Inject constructor(
     bitmapRepository: BitmapRepository,
     private val editionRepository: EditionRepository,
     private val monitoredViewsManager: MonitoredViewsManager,
-) : ViewModel() {
+) : ViewModel(),
+    com.buzbuz.smartautoclicker.feature.smart.config.ui.condition.screen.ai.AiConditionEditHandle {
 
     private val editedConditions: Flow<EditedListState<ScreenCondition>> =
         editionRepository.editionState.editedEventScreenConditionsState
@@ -103,6 +104,8 @@ class ScreenConditionsBriefViewModel @Inject constructor(
             is ScreenCondition.Number ->
                 condition.toTextItemDescription(context)
             is ScreenCondition.Text ->
+                condition.toTextItemDescription()
+            is ScreenCondition.Ai ->
                 condition.toTextItemDescription()
             null -> null
         }
@@ -144,6 +147,23 @@ class ScreenConditionsBriefViewModel @Inject constructor(
     fun upsertEditedCondition() = editionRepository.upsertEditedCondition()
     fun removeEditedCondition() = editionRepository.deleteEditedCondition()
     fun dismissEditedCondition() = editionRepository.stopConditionEdition()
+
+    /** The AI condition currently being edited, or null if the edited condition is not an AI condition. */
+    override fun getEditedAiCondition(): ScreenCondition.Ai? =
+        editionRepository.editionState.getEditedCondition<ScreenCondition.Ai>()
+
+    /** Update the fields of the currently edited AI condition. */
+    override fun updateEditedAiCondition(prompt: String, name: String, threshold: Int, shouldBeDetected: Boolean) {
+        val edited = getEditedAiCondition() ?: return
+        editionRepository.updateEditedCondition(
+            edited.copy(
+                name = name,
+                prompt = prompt,
+                threshold = threshold,
+                shouldBeDetected = shouldBeDetected,
+            )
+        )
+    }
 
     fun updateConditionThreshold(newThreshold: Int) {
         val condition = focusedCondition.value?.first ?: return
@@ -199,6 +219,13 @@ class ScreenConditionsBriefViewModel @Inject constructor(
     fun createNumberCondition(context: Context, completed: (ScreenCondition.Number) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val condition = editionRepository.editedItemsBuilder.createNewNumberCondition(context)
+            withContext(Dispatchers.Main) { completed(condition) }
+        }
+    }
+
+    fun createAiCondition(context: Context, completed: (ScreenCondition.Ai) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val condition = editionRepository.editedItemsBuilder.createNewAiCondition(context)
             withContext(Dispatchers.Main) { completed(condition) }
         }
     }
@@ -259,6 +286,12 @@ private fun ScreenCondition.Text.toTextItemDescription(): TextConditionDescripti
     TextConditionDescription(
         conditionText = text,
         conditionDetectionArea = detectionArea,
+    )
+
+private fun ScreenCondition.Ai.toTextItemDescription(): TextConditionDescription =
+    TextConditionDescription(
+        conditionText = prompt,
+        conditionDetectionArea = detectionArea ?: android.graphics.Rect(),
     )
 
 private fun ScreenCondition.Number.toTextItemDescription(context: Context): TextConditionDescription =

@@ -257,6 +257,7 @@ class ClickViewModel @Inject constructor(
             is ScreenCondition.Image -> bitmapRepository.getConditionBitmap(conditionToClick)
             is ScreenCondition.Number -> ContextCompat.getDrawable(this, R.drawable.ic_number_condition)
             is ScreenCondition.Text -> ContextCompat.getDrawable(this, R.drawable.ic_text_condition)
+            is ScreenCondition.Ai -> ContextCompat.getDrawable(this, R.drawable.ic_ai_condition)
             null -> null
         }
 

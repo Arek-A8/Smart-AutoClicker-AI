@@ -82,6 +82,7 @@ class DetectorEngine @Inject constructor(
     private val appComponentsProvider: AppComponentsProvider,
     private val debuggingListener: SmartProcessingListener,
     private val ocrModelsRepository: OCRModelsRepository,
+    private val visionModelProvider: com.buzbuz.smartautoclicker.core.smart.ai.VisionModelProvider,
 ) {
 
     /** Process the events conditions to detect them on the screen. */
@@ -256,6 +257,7 @@ class DetectorEngine @Inject constructor(
                 unblockWorkaroundEnabled = settingsRepository.isInputBlockWorkaroundEnabled(),
                 onStopRequested = { stopDetection() },
                 progressListener  = if (liveDebugging || generateReport) debuggingListener else null,
+                visionModel = visionModelProvider.getVisionModel(),
             )
             scenarioProcessor?.onScenarioStart(context)
 

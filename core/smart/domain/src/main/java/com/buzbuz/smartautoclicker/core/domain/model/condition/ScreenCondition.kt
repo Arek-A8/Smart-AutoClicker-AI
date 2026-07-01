@@ -46,6 +46,7 @@ sealed class ScreenCondition : Condition(), Prioritizable {
             is Image -> copy(eventId = eventId, priority = priority, threshold = threshold, shouldBeDetected = shouldBeDetected)
             is Number -> copy(eventId = eventId, priority = priority, threshold = threshold)
             is Text -> copy(eventId = eventId, priority = priority, threshold = threshold, shouldBeDetected = shouldBeDetected)
+            is Ai -> copy(eventId = eventId, priority = priority, threshold = threshold, shouldBeDetected = shouldBeDetected)
         }
 
     /**
@@ -146,6 +147,36 @@ sealed class ScreenCondition : Condition(), Prioritizable {
 
         override fun hashCodeNoIds(): Int =
             name.hashCode() + text.hashCode() + threshold.hashCode() + shouldBeDetected.hashCode() +
+                    detectionArea.hashCode() + priority.hashCode()
+
+    }
+
+    /**
+     * AI condition for an Event: fulfilled when a vision model confirms a natural-language described target is
+     * present on the screen.
+     *
+     * @param prompt natural-language description of what to look for, e.g. "the green Start button".
+     * @param threshold minimum model confidence, in percent (0-100%), required to consider the target detected.
+     * @param shouldBeDetected whether the condition is fulfilled when the target IS detected, or when it is NOT.
+     * @param detectionArea optional region of the screen to restrict the search to. Null searches the whole screen.
+     */
+    data class Ai(
+        override val id: Identifier,
+        override val eventId: Identifier,
+        override val name: String,
+        override val threshold: Int,
+        override val shouldBeDetected: Boolean,
+        override var priority: Int,
+        val prompt: String,
+        val detectionArea: Rect? = null,
+    ): ScreenCondition(), Prioritizable {
+
+        /** Tells if this condition is complete and valid to be saved. */
+        override fun isComplete(): Boolean =
+            super.isComplete() && prompt.isNotEmpty()
+
+        override fun hashCodeNoIds(): Int =
+            name.hashCode() + prompt.hashCode() + threshold.hashCode() + shouldBeDetected.hashCode() +
                     detectionArea.hashCode() + priority.hashCode()
 
     }

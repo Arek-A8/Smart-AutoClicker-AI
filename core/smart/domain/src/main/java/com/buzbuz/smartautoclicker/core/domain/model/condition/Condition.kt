@@ -42,5 +42,6 @@ sealed class Condition : Identifiable, Completable {
         is ScreenCondition.Image -> (this as ScreenCondition.Image).copy(eventId = evtId)
         is ScreenCondition.Number -> (this as ScreenCondition.Number).copy(eventId = evtId)
         is ScreenCondition.Text -> (this as ScreenCondition.Text).copy(eventId = evtId)
+        is ScreenCondition.Ai -> (this as ScreenCondition.Ai).copy(eventId = evtId)
     }
 }

@@ -331,6 +331,7 @@ class SmartActionsBriefViewModel @Inject constructor(
                     is ScreenCondition.Image -> bitmapRepository.getConditionBitmap(condition)
                     is ScreenCondition.Number -> ContextCompat.getDrawable(context, R.drawable.ic_number_condition)?.toBitmap()
                     is ScreenCondition.Text -> ContextCompat.getDrawable(context, R.drawable.ic_text_condition)?.toBitmap()
+                    is ScreenCondition.Ai -> ContextCompat.getDrawable(context, R.drawable.ic_ai_condition)?.toBitmap()
                 }
             }
     }

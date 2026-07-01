@@ -89,6 +89,10 @@ class EventOccurrenceConditionScreenViewHolder private constructor(
                 is ScreenCondition.Text -> {
                     conditionImage.setImageResource(R.drawable.ic_text_condition)
                 }
+
+                is ScreenCondition.Ai -> {
+                    conditionImage.setImageResource(R.drawable.ic_ai_condition)
+                }
             }
         }
     }

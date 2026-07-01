@@ -113,6 +113,20 @@ class ScreenConditionBriefViewHolder(
                     )
                     icon.setImageResource(R.drawable.ic_text_condition)
                 }
+
+                is ScreenCondition.Ai -> {
+                    icon.setIconTintColor(
+                        MaterialColors.getColor(
+                            ContextThemeWrapper(
+                                root.context,
+                                R.style.AppTheme,
+                            ),
+                            com.google.android.material.R.attr.colorOnPrimaryContainer,
+                            Color.WHITE,
+                        )
+                    )
+                    icon.setImageResource(R.drawable.ic_ai_condition)
+                }
             }
         }
     }
