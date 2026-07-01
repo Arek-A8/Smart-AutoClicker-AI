@@ -88,7 +88,7 @@ class AiConditionDialog(
             gravity = Gravity.END
         }
         buttons.addView(Button(context).apply {
-            setText(R.string.generic_delete)
+            text = "Delete"
             setOnClickListener { listener.onDeleteClicked(); back() }
         })
         buttons.addView(Button(context).apply {
