@@ -52,7 +52,7 @@ enum class CloudProtocol {
  * pixel space the model is told to report coordinates in.
  */
 data class AiConfig(
-    val backend: VisionBackend = VisionBackend.CLOUD,
+    val backend: VisionBackend = VisionBackend.LOCAL,
     val protocol: CloudProtocol = CloudProtocol.GEMINI_NATIVE,
     val baseUrl: String = "",
     val apiKey: String = "",
@@ -60,9 +60,15 @@ data class AiConfig(
     val requestTimeoutMs: Int = 30_000,
     val maxImageDimensionPx: Int = 1280,
 ) {
-    /** True if the config has the minimum fields required for the selected [backend]. */
+    /**
+     * True if the config has the minimum fields required for the selected [backend].
+     *
+     * LOCAL is always considered complete: it targets a local llama-server whose OpenAI-compatible endpoint uses
+     * whatever model is currently loaded and ignores the request's model field, so no user configuration is required
+     * to start testing.
+     */
     fun isComplete(): Boolean = when (backend) {
         VisionBackend.CLOUD -> baseUrl.isNotBlank() && apiKey.isNotBlank() && model.isNotBlank()
-        VisionBackend.LOCAL -> model.isNotBlank()
+        VisionBackend.LOCAL -> true
     }
 }

@@ -17,12 +17,22 @@
 package com.buzbuz.smartautoclicker.settings
 
 import android.os.Bundle
+import android.text.InputType
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+
+import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
+import com.buzbuz.smartautoclicker.core.smart.ai.VisionBackend
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -96,6 +106,12 @@ class SettingsFragment : Fragment() {
             setOnClickListener { viewModel.showTroubleshootingDialog(requireActivity()) }
         }
 
+        viewBinding.fieldAiConfig.apply {
+            setTitle(requireContext().getString(R.string.field_ai_config_title))
+            setDescription(requireContext().getString(R.string.field_ai_config_desc))
+            setOnClickListener { showAiConfigDialog() }
+        }
+
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.isScenarioFiltersUiEnabled.collect(viewBinding.fieldShowScenarioFilters::setChecked) }
@@ -109,6 +125,70 @@ class SettingsFragment : Fragment() {
                 launch { viewModel.shouldShowPurchase.collect(::updateRemoveAdsVisibility) }
             }
         }
+    }
+
+    private fun showAiConfigDialog() {
+        val ctx = requireContext()
+        val config = viewModel.getAiConfig()
+
+        fun dp(v: Int) = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), ctx.resources.displayMetrics,
+        ).toInt()
+
+        val pad = dp(20)
+        val container = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, dp(8), pad, 0)
+        }
+
+        val useLocalSwitch = MaterialSwitch(ctx).apply {
+            text = ctx.getString(R.string.field_ai_config_use_local)
+            isChecked = config.backend == VisionBackend.LOCAL
+        }
+        container.addView(useLocalSwitch)
+
+        container.addView(TextView(ctx).apply { text = ctx.getString(R.string.field_ai_config_base_url) })
+        val baseUrlField = EditText(ctx).apply {
+            setText(config.baseUrl)
+            hint = "https://generativelanguage.googleapis.com"
+            inputType = InputType.TYPE_TEXT_VARIATION_URI
+        }
+        container.addView(baseUrlField)
+
+        container.addView(TextView(ctx).apply { text = ctx.getString(R.string.field_ai_config_api_key) })
+        val apiKeyField = EditText(ctx).apply {
+            setText(config.apiKey)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        container.addView(apiKeyField)
+
+        container.addView(TextView(ctx).apply { text = ctx.getString(R.string.field_ai_config_model) })
+        val modelField = EditText(ctx).apply {
+            setText(config.model)
+            hint = "gemini-3.1-flash-lite"
+        }
+        container.addView(modelField)
+
+        container.addView(TextView(ctx).apply {
+            text = ctx.getString(R.string.field_ai_config_local_hint)
+            setPadding(0, dp(8), 0, 0)
+        })
+
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.field_ai_config_title)
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                viewModel.setAiConfig(
+                    config.copy(
+                        backend = if (useLocalSwitch.isChecked) VisionBackend.LOCAL else VisionBackend.CLOUD,
+                        baseUrl = baseUrlField.text.toString().trim(),
+                        apiKey = apiKeyField.text.toString().trim(),
+                        model = modelField.text.toString().trim(),
+                    )
+                )
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun updateForceEntireScreenVisibility(shouldBeVisible: Boolean) {

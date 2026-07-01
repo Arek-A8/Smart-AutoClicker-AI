@@ -136,6 +136,14 @@
     <string name="field_remove_ads">Remove ads</string>
     <string name="field_troubleshooting">Troubleshooting</string>
 
+    <string name="field_ai_config_title">AI configuration</string>
+    <string name="field_ai_config_desc">Configure the vision model used by AI conditions</string>
+    <string name="field_ai_config_use_local">Use local model (llama.cpp server)</string>
+    <string name="field_ai_config_base_url">Endpoint base URL (cloud only)</string>
+    <string name="field_ai_config_api_key">API key (cloud only)</string>
+    <string name="field_ai_config_model">Model (cloud only)</string>
+    <string name="field_ai_config_local_hint">Local mode sends frames to a llama.cpp server on http://127.0.0.1:8080 and uses whatever model is currently loaded. Cloud fields are ignored when local is on.</string>
+
 
     <!-- Legacy condition migration dialog  ======================================================================== -->
     <string name="dialog_condition_migration_title">Migration</string>

@@ -40,7 +40,7 @@ class AiSettings @Inject constructor(
 
     fun getConfig(): AiConfig = AiConfig(
         backend = runCatching { VisionBackend.valueOf(prefs.getString(KEY_BACKEND, null) ?: "") }
-            .getOrDefault(VisionBackend.CLOUD),
+            .getOrDefault(VisionBackend.LOCAL),
         protocol = runCatching { CloudProtocol.valueOf(prefs.getString(KEY_PROTOCOL, null) ?: "") }
             .getOrDefault(CloudProtocol.GEMINI_NATIVE),
         baseUrl = prefs.getString(KEY_BASE_URL, "") ?: "",

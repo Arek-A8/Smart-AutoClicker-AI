@@ -24,6 +24,8 @@ import androidx.lifecycle.ViewModel
 import com.buzbuz.smartautoclicker.core.base.workarounds.isImpactedByInputBlock
 import com.buzbuz.smartautoclicker.core.common.quality.domain.QualityRepository
 import com.buzbuz.smartautoclicker.core.settings.domain.SettingsRepository
+import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
+import com.buzbuz.smartautoclicker.core.smart.ai.AiSettings
 import com.buzbuz.smartautoclicker.feature.revenue.IRevenueRepository
 import com.buzbuz.smartautoclicker.feature.revenue.UserBillingState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,7 +40,14 @@ class SettingsViewModel @Inject constructor(
     private val qualityRepository: QualityRepository,
     private val revenueRepository: IRevenueRepository,
     private val settingsRepository: SettingsRepository,
+    private val aiSettings: AiSettings,
 ) : ViewModel() {
+
+    /** @return the current AI configuration. */
+    fun getAiConfig(): AiConfig = aiSettings.getConfig()
+
+    /** Persist the AI configuration. */
+    fun setAiConfig(config: AiConfig) = aiSettings.setConfig(config)
 
     val isScenarioFiltersUiEnabled: Flow<Boolean> =
         settingsRepository.isFilterScenarioUiEnabledFlow
