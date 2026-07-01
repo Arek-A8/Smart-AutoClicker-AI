@@ -18,6 +18,7 @@ package com.buzbuz.smartautoclicker.core.smart.ai.di
 
 import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
 import com.buzbuz.smartautoclicker.core.smart.ai.AiSettings
+import com.buzbuz.smartautoclicker.core.smart.ai.CloudProtocol
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionBackend
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionModel
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionModelProvider
