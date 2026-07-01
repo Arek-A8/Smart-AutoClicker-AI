@@ -31,6 +31,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 
 import com.buzbuz.smartautoclicker.core.smart.ai.AiConfig
+import com.buzbuz.smartautoclicker.core.smart.ai.CloudProtocol
 import com.buzbuz.smartautoclicker.core.smart.ai.ModelListResult
 import com.buzbuz.smartautoclicker.core.smart.ai.VisionBackend
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -149,6 +150,30 @@ class SettingsFragment : Fragment() {
         }
         container.addView(useLocalSwitch)
 
+        // Protocol selector: off = OpenAI-compatible (LM Studio/llama.cpp/Ollama), on = Gemini native.
+        val geminiProtocolSwitch = MaterialSwitch(ctx).apply {
+            text = ctx.getString(R.string.field_ai_config_use_gemini)
+            isChecked = config.protocol == CloudProtocol.GEMINI_NATIVE
+        }
+        container.addView(geminiProtocolSwitch)
+
+        // Local server host/port (used when "use local" is on). Lets you target a server on another LAN device.
+        container.addView(TextView(ctx).apply { text = ctx.getString(R.string.field_ai_config_local_host) })
+        val localHostField = EditText(ctx).apply {
+            setText(config.localHost)
+            hint = AiConfig.DEFAULT_LOCAL_HOST
+            inputType = InputType.TYPE_TEXT_VARIATION_URI
+        }
+        container.addView(localHostField)
+
+        container.addView(TextView(ctx).apply { text = ctx.getString(R.string.field_ai_config_local_port) })
+        val localPortField = EditText(ctx).apply {
+            setText(config.localPort.toString())
+            hint = AiConfig.DEFAULT_LOCAL_PORT.toString()
+            inputType = InputType.TYPE_CLASS_NUMBER
+        }
+        container.addView(localPortField)
+
         container.addView(TextView(ctx).apply { text = ctx.getString(R.string.field_ai_config_base_url) })
         val baseUrlField = EditText(ctx).apply {
             setText(config.baseUrl)
@@ -173,9 +198,12 @@ class SettingsFragment : Fragment() {
 
         fun currentConfig(): AiConfig = config.copy(
             backend = if (useLocalSwitch.isChecked) VisionBackend.LOCAL else VisionBackend.CLOUD,
+            protocol = if (geminiProtocolSwitch.isChecked) CloudProtocol.GEMINI_NATIVE else CloudProtocol.OPENAI_COMPATIBLE,
             baseUrl = baseUrlField.text.toString().trim(),
             apiKey = apiKeyField.text.toString().trim(),
             model = modelField.text.toString().trim(),
+            localHost = localHostField.text.toString().trim().ifBlank { AiConfig.DEFAULT_LOCAL_HOST },
+            localPort = localPortField.text.toString().trim().toIntOrNull() ?: AiConfig.DEFAULT_LOCAL_PORT,
         )
 
         val fetchModelsButton = Button(ctx).apply {

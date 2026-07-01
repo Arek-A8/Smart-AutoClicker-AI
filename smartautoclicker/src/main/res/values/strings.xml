@@ -138,11 +138,14 @@
 
     <string name="field_ai_config_title">AI configuration</string>
     <string name="field_ai_config_desc">Configure the vision model used by AI conditions</string>
-    <string name="field_ai_config_use_local">Use local model (llama.cpp server)</string>
+    <string name="field_ai_config_use_local">Use local model (self-hosted server)</string>
+    <string name="field_ai_config_use_gemini">Use Gemini protocol (off = OpenAI-compatible)</string>
+    <string name="field_ai_config_local_host">Local server host (local mode)</string>
+    <string name="field_ai_config_local_port">Local server port (local mode)</string>
     <string name="field_ai_config_base_url">Endpoint base URL (cloud only)</string>
     <string name="field_ai_config_api_key">API key (cloud only)</string>
-    <string name="field_ai_config_model">Model (cloud only)</string>
-    <string name="field_ai_config_local_hint">Local mode sends frames to a llama.cpp server on http://127.0.0.1:8080 and uses whatever model is currently loaded. Cloud fields are ignored when local is on.</string>
+    <string name="field_ai_config_model">Model</string>
+    <string name="field_ai_config_local_hint">Local mode sends frames over plain HTTP to a self-hosted OpenAI-compatible server (llama.cpp / LM Studio / Ollama) at the host and port above — either this device (127.0.0.1) or another device on your network. No API key is needed. The Model field selects which model to request (use Fetch models); leave it blank to let a single-model server pick. Base URL, API key and Gemini protocol apply only when local mode is off.</string>
     <string name="field_ai_config_test">Test connection</string>
     <string name="field_ai_config_testing">Sending a test image to the model… this can take a while on a local CPU model.</string>
     <string name="field_ai_config_fetch_models">Fetch models</string>

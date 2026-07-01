@@ -52,7 +52,12 @@ internal object AiModule {
                 return when (config.backend) {
                     VisionBackend.CLOUD -> CloudVisionModel(config)
                     VisionBackend.LOCAL -> LocalVisionModel(
-                        LocalServerConfig(maxImageDimensionPx = config.maxImageDimensionPx),
+                        LocalServerConfig(
+                            host = config.localHost,
+                            port = config.localPort,
+                            modelId = config.model.ifBlank { LocalServerConfig().modelId },
+                            maxImageDimensionPx = config.maxImageDimensionPx,
+                        ),
                     )
                 }
             }
@@ -75,7 +80,7 @@ internal object AiModule {
         VisionBackend.CLOUD -> this
         VisionBackend.LOCAL -> copy(
             protocol = CloudProtocol.OPENAI_COMPATIBLE,
-            baseUrl = LocalServerConfig().let { "http://${it.host}:${it.port}/v1" },
+            baseUrl = "http://$localHost:$localPort/v1",
             apiKey = "local",
             requestTimeoutMs = LocalServerConfig().requestTimeoutMs,
         )

@@ -47,6 +47,8 @@ class AiSettings @Inject constructor(
         apiKey = prefs.getString(KEY_API_KEY, "") ?: "",
         model = prefs.getString(KEY_MODEL, "") ?: "",
         maxImageDimensionPx = prefs.getInt(KEY_MAX_IMAGE_DIM, DEFAULT_MAX_IMAGE_DIM),
+        localHost = prefs.getString(KEY_LOCAL_HOST, null) ?: AiConfig.DEFAULT_LOCAL_HOST,
+        localPort = prefs.getInt(KEY_LOCAL_PORT, AiConfig.DEFAULT_LOCAL_PORT),
     )
 
     fun setConfig(config: AiConfig) {
@@ -57,6 +59,8 @@ class AiSettings @Inject constructor(
             putString(KEY_API_KEY, config.apiKey)
             putString(KEY_MODEL, config.model)
             putInt(KEY_MAX_IMAGE_DIM, config.maxImageDimensionPx)
+            putString(KEY_LOCAL_HOST, config.localHost)
+            putInt(KEY_LOCAL_PORT, config.localPort)
         }
     }
 
@@ -75,6 +79,8 @@ class AiSettings @Inject constructor(
         private const val KEY_API_KEY = "api_key"
         private const val KEY_MODEL = "model"
         private const val KEY_MAX_IMAGE_DIM = "max_image_dim"
+        private const val KEY_LOCAL_HOST = "local_host"
+        private const val KEY_LOCAL_PORT = "local_port"
 
         const val MIN_IMAGE_DIM = 256
         const val MAX_IMAGE_DIM = 2048

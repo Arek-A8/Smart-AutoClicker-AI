@@ -52,10 +52,15 @@ internal class OpenAiTransport(private val config: AiConfig) : CloudTransport {
         val url = "$base/chat/completions"
         Log.i(TAG, "POST $url (model=${body.model}, imageBytes~${imageBase64Jpeg.length})")
 
+        val headers = if (config.apiKey.isNotBlank()) {
+            mapOf("Authorization" to "Bearer ${config.apiKey}")
+        } else {
+            emptyMap()
+        }
         val result = httpPostJson(
             url = url,
             jsonBody = cloudJson.encodeToString(body),
-            headers = mapOf("Authorization" to "Bearer ${config.apiKey}"),
+            headers = headers,
             timeoutMs = config.requestTimeoutMs,
         )
         if (!result.isSuccess) {

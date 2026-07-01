@@ -59,16 +59,30 @@ data class AiConfig(
     val model: String = "",
     val requestTimeoutMs: Int = 30_000,
     val maxImageDimensionPx: Int = 1280,
+    /** Host of the self-hosted OpenAI-compatible server for [VisionBackend.LOCAL]. May be a LAN IP of another device. */
+    val localHost: String = DEFAULT_LOCAL_HOST,
+    /** Port of the self-hosted server for [VisionBackend.LOCAL]. */
+    val localPort: Int = DEFAULT_LOCAL_PORT,
 ) {
     /**
      * True if the config has the minimum fields required for the selected [backend].
      *
-     * LOCAL is always considered complete: it targets a local llama-server whose OpenAI-compatible endpoint uses
-     * whatever model is currently loaded and ignores the request's model field, so no user configuration is required
-     * to start testing.
+     * LOCAL is always complete: it targets a self-hosted OpenAI-compatible server (llama.cpp / LM Studio / Ollama),
+     * on this device or another on the LAN, which uses whatever model is loaded and needs no credential.
+     *
+     * For CLOUD, an API key is required only for the Gemini native protocol. OpenAI-compatible servers (incl. remote
+     * LM Studio) do not require a key, so it is optional there.
      */
     fun isComplete(): Boolean = when (backend) {
-        VisionBackend.CLOUD -> baseUrl.isNotBlank() && apiKey.isNotBlank() && model.isNotBlank()
+        VisionBackend.CLOUD -> when (protocol) {
+            CloudProtocol.GEMINI_NATIVE -> baseUrl.isNotBlank() && apiKey.isNotBlank() && model.isNotBlank()
+            CloudProtocol.OPENAI_COMPATIBLE -> baseUrl.isNotBlank() && model.isNotBlank()
+        }
         VisionBackend.LOCAL -> true
+    }
+
+    companion object {
+        const val DEFAULT_LOCAL_HOST = "127.0.0.1"
+        const val DEFAULT_LOCAL_PORT = 8080
     }
 }
